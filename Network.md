@@ -44,7 +44,19 @@
     - 被动关闭的一方受到FIN包后，协议层回复ACK；然后被动关闭的一方，进入CLOSE_WAIT状态，主动关闭的一方等待对方关闭，则进入FIN_WAIT_2状态；此时主动关闭的一方等待被动关闭一方调用close操作
   - B->A 提出关闭请求
   - A->B 对请求进行确认呢
-- TIME_WAIT
+- TIME_WAIT和CLOSE_WAIT
+  - 详细过程
+    -  主动关闭连接的一方，调用close()；协议层发送FIN包 ;
+    - 被动关闭的一方收到FIN包后，协议层回复ACK；然后被动关闭的一方，进入==CLOSE_WAIT==状态，主动关闭的一方等待对方关闭，则进 入==FIN_WAIT_2==状态；此时，主动关闭的一方等待被动关闭一方的应用程序，调用close操作 ;
+    - 被动关闭的一方在完成所有数据发送后，调用close()操作；此时，协议层发送FIN包给主动关闭的一方，等待对方的ACK，被动关闭的一方进入==LAST_ACK==状态；
+    - 主动关闭的一方收到FIN包，协议层回复ACK；此时，主动关闭连接的一方，进入==TIME_WAIT==状态；而被动关闭的一方，进入CLOSED状态 ;
+    - 等待2MSL时间，主动关闭的一方，结束TIME_WAIT，进入CLOSED状态 ; 
+  - TIME_WAIT
+    - TIME_WAIT 是主动关闭链接时形成的，等待2MSL时间，约4分钟。主要是防止最后一个ACK丢失。  由于TIME_WAIT 的时间会非常长，因此server端应尽量减少主动关闭连接
+      - 假设最终的ACK丢失，server将重发FIN，client必须维护TCP状态信息以便可以重发最终的ACK，否则会发送RST，结果server认为发生错误。TCP实现必须可靠地终止连接的两个方向(全双工关闭)，client必须进入 TIME_WAIT 状态，因为client可能面 临重发最终ACK的情形。
+      - 如果 TIME_WAIT 状态保持时间不足够长(比如小于2MSL)，第一个连接就正常终止了。第二个拥有相同相关五元组的连接出现，而第一个连接的重复报文到达，干扰了第二个连接。TCP实现必须防止某个连接的重复报文在连接终止后出现，所以让TIME_WAIT状态保持时间足够长(2MSL)，连接相应方向上的TCP报文要么完全响应完毕，要么被 丢弃。建立第二个连接的时候，不会混淆。
+  - CLOSE_WAIT
+    - CLOSE_WAIT是被动关闭连接是形成的。根据TCP状态机，服务器端收到客户端发送的FIN，则按照TCP实现发送ACK，因此进入CLOSE_WAIT状态。但如果服务器端不执行close()，就不能由CLOSE_WAIT迁移到LAST_ACK，则系统中会存在很多CLOSE_WAIT状态的连接。此时，可能是系统忙于处理读、写操作，而未将已收到FIN的连接，进行close。此时，recv/read已收到FIN的连接socket，会返回0。
 - CLOSE_WAIT
 
 ##### Q5: 点击一个网址会发生什么？
@@ -79,6 +91,10 @@
     ⑨拿到www.a.shifen.com的IP
     
     ⑩localdns返回本机www.baidu.com cname www.a.shifen.com 以及 www.a.shifen.com的IP
+
+
+​    
+​    
 ##### Q7: https和http区别
 
 - HTTP协议是以明文的方式在网络中传输数据，而HTTPS协议传输的数据则是经过TLS加密后的，HTTPS具有更高的安全性
@@ -104,7 +120,7 @@
 
 ##### Q8: http1.0和http1.1最大的区别?==长连接除了能够节省频繁握手挥手的开销还有什么优点?==
 
-- <img src="/img/http0.png" alt="image-20200811152424993" style="zoom:50%;" />
+<img src="/img/http0.png" alt="image-20200811152424993" style="zoom:50%;" />
 
 
 
@@ -114,4 +130,34 @@ dns劫持
 
 可以直接在客户端里写好dns server吗?
 
+为什么DNS解析过程选择了并不可靠的UDP传输。
+
 面对不同运营商例如电信移动, dns查询怎么优化找到对于用户来说比较快的ip(没听懂, 完全不会)
+
+HTTP2.0的新特性？
+
+TCP如何保证可靠传输？
+
+http响应码，问了502
+
+
+
+https的过程，怎么保证安全 
+
+  \11. 为什么ssl层要采用对称密钥通信 
+
+  \12. 对称密钥和非对称密钥的区别 
+
+  \13. tcp/ip的每一层代表的是什么 
+
+  \14. ARP的过程 
+
+  \15. ip地址是虚拟ip吧，为什么客户端和服务端能通通信 
+
+  \16. 传输层的最重要的协议 
+
+  \17. tcp和udp的区别 
+
+  \18. tcp服务端如果内存满了，客户端怎么处理
+
+1.TCP什么情况下会分包？

@@ -67,9 +67,21 @@
 - 对视图的修改也会导致对表数据的修改
 - 左查询[?]
 
-###### ##### Q4: inner join, right join, left join区别
+
+
+#####  Q4: inner join, right join, left join区别
 
 - left join(左联接) 返回包括左表中的所有记录和右表中联结字段相等的记录 
 - right join(右联接) 返回包括右表中的所有记录和左表中联结字段相等的记录
 - inner join(等值连接) 只返回两个表中联结字段相等的行
 - 
+
+
+
+
+
+
+
+数据库的四个隔离级别
+
+MySQL应该给哪些列建索引，哪些不应该建索引。
