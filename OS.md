@@ -204,7 +204,143 @@ select，poll，epoll都是IO多路复用的机制。I/O多路复用就是通过
 - 并发（concurrency）：指宏观上看起来两个程序在同时运行，比如说在单核cpu上的多任务。但是从微观上看两个程序的指令是交织着运行的，你的指令之间穿插着我的指令，我的指令之间穿插着你的，在单个周期内只运行了一个指令。这种并发并不能提高计算机的性能，只能提高效率。
 - 并行（parallelism）：指严格物理意义上的同时运行，比如多核cpu，两个程序分别运行在两个核上，两者之间互不影响，单个周期内每个程序都运行了自己的指令，也就是运行了两条指令。这样说来并行的确提高了计算机的效率。所以现在的cpu都是往多核方面发展。
 
-- 用过多线程和多进程么
+
+
+## Q7.内存管理
+
+- 名词
+  - 内存： 内存又称主存，是CPU能直接寻址的存储空间，它的特点是存取速率快。内存是电脑中主要部件，它是相对于外存来说。
+  - 外存：外储存器是指除计算机内存及CPU缓存以外的储存器，此类储存器一般断电后仍然能保存数据。外存需要通过I/O系统与之交换数据，又称为辅助存储器。常见的外储存器有硬盘、软盘、光盘、U盘等
+  - 虚存：虚拟存储器
+  - 快存（Cache？）： 介于CPU与内存之间，常用有一级缓存（L1）、二级缓存（L2）、三级缓存（L3）（一般存在于Intel系列）。它的读写速度比内存还快，当CPU在内存中读取或写入数据时，数据会被保存在高级缓冲存储器中，当下次访问该数据时，CPU直接读取高级缓冲存储器，而不是更慢的内存。
+
+- 虚拟内存：
+  - 在程序装入时，可以将程序的一部分装入内存，而将其余部分留在外存，就可以启动程序执行。在程序执行时，当访问的信息不在内存时，有操作系统将所需部分调入内存继续执行，且将暂时不用的部分换出到外存。这样系统好像为用户提供了一个比实际内存大得多的存储器， **虚拟存储器**
+  - 优点
+    - 多次性， 无需在作业运行时一次性的全部装入内存，而是允许分多次调入内存运行
+    - 对换性，无需再作业运行时一直常驻内存，而是允许再作业运行过程当中，进行换出和换进
+    - 虚拟性，逻辑上扩充了内存的容量
+  - 实现
+    - 请求分页存储管理
+      - 页表的原理#TODO
+        - 在分页系统中，允许将进程的各个页离散的存储在内存的任一物理块中。系统为每个进程建立了一张页表。进程地址空间内所有的页面，依次在页面中有一页表项记录了相应的页面对于的物理块号。进程执行时，通过查找页表可以找到每页在内存的物理快好。（页号-> 物理块号的地址映射）
+    - 请求分段存储管理
+    - 请求段页式存储管理
+    - 什么是段页式存储 #TODO
+        - 进程的地址空间首先被分为若干个逻辑段，每段由自己的段号，然后再将每一段分成若干大小固定的页。每个进程建立一张段表，每个分段建立一张页表
+
+
+## Q8: LRU 实现：
+```c++
+  class DLinkedNode {
+      public: 
+      int key;
+      int val;
+      DLinkedNode *pre;
+      DLinkedNode *next;
+      
+      
+      DLinkedNode(int _key, int _val): key(_key), val(_val), pre(NULL), next(NULL){}
+      DLinkedNode(): key(0), val(0), pre(NULL), next(NULL){}
+  };
+  
+  class LRUCache {
+  private:
+      unordered_map<int, DLinkedNode *> m;
+      int cap;
+      int size;
+      DLinkedNode *head;
+      DLinkedNode *tail;
+      
+  public:
+      LRUCache(int _cap): cap(_cap) {
+          size = 0;
+          head = new DLinkedNode();
+          tail = new DLinkedNode();
+          
+          head->next = tail;
+          tail->pre = head;
+      }
+      
+      int get(int key) {
+          if (!m.count(key)) {
+              return -1;
+          }
+          DLinkedNode *node = m[key];  
+          moveHead(node);
+          return node->val;
+      }
+      
+      void put(int key, int value) {
+          if (m.count(key)) {
+              DLinkedNode *node = m[key];  
+              node->val = value;
+              moveHead(node);
+              return;
+          }
+          
+          DLinkedNode *node = new DLinkedNode(key, value);
+          m[key] = node;
+          addHead(node);
+          size++;
+          if (size > cap) {
+              DLinkedNode *t = removeTail();  
+              m.erase(t->key);
+              size--;
+         //     delete t;
+          }
+      }
+      
+      void addHead(DLinkedNode *n) {
+          DLinkedNode *f = head->next;
+          f->pre = n;
+          n->next = f;
+          n->pre = head;
+          head->next = n;
+      }
+      
+      void moveHead(DLinkedNode *node) {
+          removeNode(node);
+          addHead(node);
+      }
+      
+      DLinkedNode *removeTail() {
+          DLinkedNode *d = tail->pre;   
+          d->pre->next = tail;
+          tail->pre = d->pre;
+          return d;
+      }
+      
+      void removeNode(DLinkedNode *node) {
+          node->next->pre = node->pre;
+          node->pre->next = node->next;
+      }
+  };
+  
+  /**
+   * Your LRUCache object will be instantiated and called as such:
+   * LRUCache* obj = new LRUCache(capacity);
+   * int param_1 = obj->get(key);
+   * obj->put(key,value);
+   */
+  ```
+
+## Q9: 孤儿进程、僵尸进程和守护进程
+
+- 孤儿进程
+  - 孤儿进程指的是在其父进程执行完成或被终止 后仍继续运行的一类进程。
+  - 一般情况下，子进程是由父进程创建，而子进程和父进程的退出是无顺序的，两者之间都不知道谁先退出。正常情况下父进程先结束会调用 wait 或者 waitpid 函数等待子进程完成再退出，而一旦父进程不等待直接退出，则剩下的子进程会被init(pid=1)进程接收，成会孤儿进程。（进程树中除了init都会有父进程）
+- 僵尸进程
+  - 指完成执行（通过 exit 系统调用，或运行时发生致命错误或收到终止信号所致）但在操作系统的进程表中仍然有一个表项（进程控制块PCB），处于"终止状态 "的进程。
+  - 如果子进程先退出了，父进程还未结束并且没有调用 wait 或者 waitpid 函数获取子进程的状态信息，则子进程残留的状态信息（ task_struct 结构和少量资源信息）会变成僵尸进程。
+- 守护进程
+  - 是指在后台运行，没有控制终端与之相连的进程。它独立于控制终端，通常周期性地执行某种任务 。 守护进程脱离于终端是为了避免进程在执行过程中的信息在任何终端上显示并且进程也不会被任何终端所产生的终端信息所打断 。
+
+## Q10:用过多线程和多进程么
+
+![preview](https://pic3.zhimg.com/v2-add56b22280bb4d4ba61b27fdc4d8bc2_r.jpg)
+
+
 - 虚拟内存，常驻内存和共享内存区别
 - 内存缺页中断
 - fork
