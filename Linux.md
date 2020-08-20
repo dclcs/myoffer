@@ -110,6 +110,14 @@ Swap:      39321724      139784    39181940
 ## Q5: exit() 与 _exit()的区别
 exit()清理后进入内核，_exit()直接陷入内核。
 
+## Q6: 查linux下所有a开头文件行数
+
+- wc -l `find ./ -name "openmesh*"`
+
+## Q7: linux下查端口是否被用
+
+- lsof -i:端口号查看某个端口是否被占用 
+- netstat | grep 'port-number'
 
 
 杀指定进程代码
