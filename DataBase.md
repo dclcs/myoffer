@@ -95,7 +95,11 @@
   - 不可重复读和脏读的区别是：脏读是某一事务读取了另一个事务未提交的脏数据，而不可重复读则是读取了前一事务提交的数据。
   - 幻读和不可重复读都是读取了另一条已经提交的事务（这点就脏读不同），所不同的是不可重复读查询的都是同一个数据项，而幻读针对的是一批数据整体（比如数据的个数）。
 
-TODO : 隔离级别实验
+- 解决幻读
+
+  - 使用串行化读的隔离级别
+  - MVCC+next-key locks：next-key locks由record locks(索引加锁) 和 gap locks(间隙锁，每次锁住的不光是需要使用的数据，还会锁住这些数据附近的数据)
+
 
 ## Q6: MySQL 索引（索引组织结构以及如何建立索引）
 
@@ -153,7 +157,7 @@ TODO : 隔离级别实验
 
 ## Q10: 最左匹配原则
 - 最左优先，以最左边的为起点任何连续的索引都能匹配上。
-- 针对的是联合索引
+- 针对的是联合索引，联合索引的健值数量不是一个，而是多个。构建一颗B+树只能根据一个值来构建，因此数据库依据联合索引最左的字段来构建B+树。
 
 ![](img/union_idx.png)
 
@@ -209,10 +213,51 @@ select id from order where user_id between 1 and 3`
 ·         SELECT 结合并行的INSERT语句，并且只有很少的UPDATE或DELETE语句。
 ·         在整个表上有许多扫描或GROUP BY操作，没有任何写操作。
 
+
+
+
 ## Q14: 请问我delete一个数据，这个数据在物理内存上有没有删除？请问说一下数据库的增删改查具体怎么做的？
 
 在 InnoDB 中，你的 delete 操作，并不会真的把数据删除，mysql 实际上只是给删除的数据打了个标记，标记为删除，因此你使用 delete 删除表中的数据，表文件在磁盘上所占空间不会变小，我们这里暂且称之为假删除。
 
+
+## Q15: MySQL 不走索引
+
+- in, 2个及以上参数 ，单列索引a， where a in (xxxx) ，如果参数是1个会用到索引，如果参数是2个及以上不会用到索引（包括int和varchar类型的字段）
+- like '%abc' 或者 like‘%abc%’
+- where num/2=100 或者 substring(a,1,3)='ab'或者age+10=30
+- where id !=2 或者 where id <> 2
+- where name is null
+- not in ,单列索引a ，where a not in (xxxxx) ，不管里面是一个还是多个参数都用不到a的索引（包括int和varchar类型的字段）
+- 字符类型的字段与数字比较 
+- 单列索引a , where条件中 ：
+- a用到（比如a> xxx 或者 a>=yyy 或者 a >xxx and a < yyy 或者 a  between xxx and yyy  均会用到），a > xxx or a < yyy 用不到。（包括int和varchar类型的字段）
+- 单列索引a,单列索引b,单列索引c,where条件中 ：
+  - a or b 均用不到，
+  - a or b or c 均用不到，
+  - a and b 用到 a的索引，
+  - a and b and c 用到a的索引，
+  - c and b 用到b的索引(谁的索引定义在前面用谁的),
+  - (a and b ) or c 均用不到，
+  - (a or b ) and c 用到c的索引
+- 复合索引a-b-c，where条件中 ：
+  - a用到，
+  - a and b用到，
+  - b and a用到，
+  - a and c用到，
+  - c and a用到，
+  - a and b and c用到，
+  - c and b and a用到，
+  - b用不到，
+  - c用不到，
+  - b and c用不到，
+  - c and b用不到，
+  - a or b用不到，
+  - b or c用不到,
+  - a or b or c用不到，
+  - (a or b) and c用不到，
+  - (a and b) or c用不到，
+  - (a or d) and b and c 用不到
 
 事务和锁
 索引什么时候失效
