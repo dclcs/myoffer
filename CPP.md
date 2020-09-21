@@ -383,6 +383,7 @@ cout << &quot;<< C190.foo this: &quot; << this << &quot; vtadr: &quot; << *(void
 - 深复制：在计算机中开辟一块新的内存地址用于存放复制的对象。
 
 
+## 
 
 C++的新的特性 move函数具体是干嘛的
 
