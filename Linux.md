@@ -147,6 +147,16 @@ F. 在读取了部分数据时被信号中断。
 ## Q10: 栈的指定大小为多少, 可不可以自行调节. 如何自行调节? 
 一般，在Unix-like平台，栈的大小不是由程序自己来控制的而是由环境变量来控制的，所以就不能通过设置编译器（像gcc)的任何编译标志来设置栈的大小；在windows平台下，栈的大小的信息是包含在可执行文件中的。它可以在Visual C++的编译过程中设置，但是在gcc中是不可行的。也可以用Microsoft提供的一个叫作：”editbin.exe“程序来直接修改可执行文件的栈的大小。
 
+
+## Q11: 怎么找到文本中的几行 
+1. 根据关键字查看日志：`cat catlina.log | grep "test"`
+2. 根据关键字查看后20行：`cat catlina.log | grep "test" -A 20`
+3. 根据关键字查看前20行：`cat catlina.log | grep "test" -B 20`
+4. 根据关键字查看前后20行：`cat -n catlina.log | grep "test" -C 20`
+5. 查看日志前100行：`cat catlina.log | head -n 100`
+6. 查看日志后100行：`cat -n catlina.log | tail -n 100`
+
+
 Linux系统：
      ulimit -a    #显示当前用户的栈大小
      ulimit -s 32768 #将当前用户的栈大小设置为32M bytes
